@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Southwest Checkin GUI</title>
+    <style>
+    /* Modal magic */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+}
+
+.modal-content {
+    background-color: #fff;
+    margin: 5% auto;
+    padding: 20px;
+    width: 70%;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    position: relative;
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: 80%;
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close:hover {
+    color: #000;
+}
+table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+th, td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+            vertical-align: middle;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        /* Form styles */
+        form {
+            margin-top: 10px;
+        }
+
+        label, input {
+            display: block;
+            margin: 2px 0;
+        }
+
+        button {
+            background-color: #0074d9;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            display: inline-flex;
+            margin: 10px 2px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+    <script>
+function addWindow() {
+    const firstName = document.getElementById("firstName").value;
+    const lastName = document.getElementById("lastName").value;
+    const confirmationNumber = document.getElementById("confirmationNumber").value;
+
+    fetch(`/add?firstName=${firstName}&lastName=${lastName}&confirmation_number=${confirmationNumber}`)
+        .then(response => response.text())
+        .then(data => {
+            alert(data);
+            listWindows()
+        })
+        .catch(error => {
+            console.error("Error:", error);
+        });
+    }
+function listWindows() {
+    fetch(`/list`)
+        .then(response => response.text())
+        .then(data => {
+            const confirmationNumbers = data.split(',');
+            const confirmationNumbersTable = document.getElementById("confirmationNumbers");
+
+            // Clear existing table content
+            confirmationNumbersTable.innerHTML = "";
+            if (data.length >1){
+            for (const confirmationNumber of confirmationNumbers) {
+                const row = document.createElement("tr");
+
+                const confirmationCell = document.createElement("td");
+                const windowLink = document.createElement("p");
+                windowLink.textContent = confirmationNumber;
+                confirmationCell.appendChild(windowLink);
+
+                const actionsCell = document.createElement("td");
+                const statusButton = document.createElement("button");
+                statusButton.textContent = "Show Log";
+                statusButton.onclick = () => statusWindow(confirmationNumber)
+                actionsCell.appendChild(statusButton);
+                const resetButton = document.createElement("button");
+                resetButton.textContent = "Reset";
+                resetButton.onclick = () => resetWindow(confirmationNumber);
+                actionsCell.appendChild(resetButton);
+                const killButton = document.createElement("button");
+                killButton.textContent = "Kill";
+                killButton.onclick = () => killWindow(confirmationNumber);
+                actionsCell.appendChild(killButton);
+
+                const statusCell = document.createElement("td");
+                const statusText = document.createElement("p");
+                checkStatus(confirmationNumber)
+                    .then(status => {
+                        statusText.textContent = status;
+                    })
+                    .catch(error => {
+                        console.error("Error:", error);
+                    });
+                statusCell.appendChild(statusText);
+
+                row.appendChild(confirmationCell);
+                row.appendChild(actionsCell);
+                row.appendChild(statusCell);
+
+                confirmationNumbersTable.appendChild(row);
+            }}
+            else{
+                const row = document.createElement("tr");
+                const confirmationCell = document.createElement("td");
+                const windowLink = document.createElement("p");
+                windowLink.textContent = "No bots found";
+                confirmationCell.appendChild(windowLink);
+                row.appendChild(confirmationCell);
+                confirmationNumbersTable.appendChild(row);
+            }
+        })
+        .catch(error => {
+            console.error("Error:", error);
+        });
+}
+
+function killWindow(confirmationNumber) {
+    const confirmed = confirm(`Are you sure you want to kill the window with confirmation number ${confirmationNumber}?`);
+    if (!confirmed) {
+        return; // User canceled
+    }
+    fetch(`/kill?confirmation_number=${confirmationNumber}`, {
+        method: 'GET', // Use POST or another suitable method if required
+    })
+        .then(response => response.text())
+        .then(data => {
+            alert(data); // Display a confirmation message to the user
+            listWindows(); // Refresh the table after killing the window
+        })
+        .catch(error => {
+            console.error("Error:", error);
+        });
+}
+function statusWindow(confirmationNumber) {
+    const modal = document.getElementById("statusModal");
+    modal.style.display = "block";
+
+    // Fetch status data
+    fetch(`/status?confirmation_number=${confirmationNumber}`, {
+        method: 'GET'
+    })
+        .then(response => response.text())
+        .then(data => {
+            const statusOutput = document.getElementById("statusOutput");
+            statusOutput.textContent = data;
+        })
+        .catch(error => {
+            console.error("Error:", error);
+        });
+}
+
+function resetWindow(confirmationNumber) {
+    const modal = document.getElementById("statusModal");
+    modal.style.display = "block";
+
+    // Fetch status data
+    fetch(`/reset?confirmation_number=${confirmationNumber}`, {
+        method: 'GET'
+    })
+        .then(response => response.text())
+        .then(data => {
+            const statusOutput = document.getElementById("statusOutput");
+            statusOutput.textContent = data;
+        })
+        .catch(error => {
+            console.error("Error:", error);
+        });
+}
+
+function checkStatus(confirmationNumber) {
+    return fetch(`/checkstatus?confirmation_number=${confirmationNumber}`, {
+        method: 'GET'
+    })
+        .then(response => response.text())
+        .then(data => {
+            //alert(data)
+            return data;
+        })
+        .catch(error => {
+            console.error("Error:", error);
+        });
+
+}
+
+// Function to close the modal
+function closeModal() {
+    const modal = document.getElementById("statusModal");
+    modal.style.display = "none";
+}
+// Refresh windows every 30s
+setInterval(listWindows, 30000);
+    </script>
+</head>
+<body onload="listWindows()">
+    <div id="statusModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <pre id="statusOutput"></pre>
+    </div>
+    </div>
+    <h1>Southwest Checkin GUI</h1>
+    <h2>Active Bots</h2>
+    <button type="button" onclick="listWindows()">Refresh Bots</button>
+    <table>
+        <thead>
+            <tr>
+                <th>Confirmation Number</th>
+                <th>Actions</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody id="confirmationNumbers"></tbody>
+    </table>
+    <h2>Create a Bot</h2>
+    <form id="addForm">
+        <label for="firstName">First Name:</label>
+        <input type="text" id="firstName" name="firstName" required><br>
+        <label for="lastName">Last Name:</label>
+        <input type="text" id="lastName" name="lastName" required><br>
+        <label for="confirmationNumber">Confirmation Number:</label>
+        <input type="text" id="confirmationNumber" name="confirmationNumber" required><br>
+        <button type="button" onclick="addWindow()">Add Bot</button>
+    </form>
+</body>
+</html>
