@@ -12,7 +12,7 @@ cd ...
 go run website.go
 ```
 
-By default it only runs on localhost:8080 and for southwest.py to be in `/root/auto-southwest-check-in`
+By default it only runs on localhost:8080 and expects southwest.py to be in `/root/auto-southwest-check-in`
 
 If you use this it's a good idea to pair it with a reverse proxy with authentication.
 
