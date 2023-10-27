@@ -12,6 +12,15 @@ go run website.go
 
 By default it only runs on localhost:8080 and expects southwest.py to be in `/root/auto-southwest-check-in` if you don't update the paths
 
+## Config
+State is now stored in a CSV file that will reload bots on startup
+
+```
+echo "John,Smith,AAA123" > /root/auto-southwest-check-in-gui/confirmations.csv
+echo "Jane,Smith,BBB123" >> /root/auto-southwest-check-in-gui/confirmations.csv
+```
+
+## Security
 If you use this it's a good idea to pair it with a reverse proxy with authentication.
 
 ```
