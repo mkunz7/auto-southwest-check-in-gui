@@ -4,29 +4,30 @@ Golang Gui for [auto-southwest-check-in](https://github.com/jdholtz/auto-southwe
 ## Install
 
 ```
-apt install tmux
-tmux kill-session -t cgui 2>/dev/null
-tmux new -s cgui -d
+apt install -y tmux
 git clone ...
 cd ...
 go run website.go
 ```
 
-By default it only runs on localhost:8080 and expects southwest.py to be in `/root/auto-southwest-check-in`
+By default it only runs on localhost:8080 and expects southwest.py to be in `/root/auto-southwest-check-in` if you don't update the paths
 
 If you use this it's a good idea to pair it with a reverse proxy with authentication.
 
 ```
 wget https://github.com/caddyserver/caddy/releases/download/v2.7.5/caddy_2.7.5_linux_amd64.tar.gz
 tar xf caddy_2.7.5_linux_amd64.tar.gz
-./caddy hash-password
-nano Caddyfile
-yourdomain.duckdns.org {
- reverse_proxy * 127.0.0.1:8080
- basicauth {
-  admin PASTEHERE
- }
+CADDYUSER="admin"
+CADDYPASS=`./caddy hash-password -p REPLACEPASSWORD`
+SUBDOMAIN="yoursubdomain"
+cat > Caddyfile << EOF
+$SUBDOMAIN.duckdns.org {
+        reverse_proxy * 127.0.0.1:8080
+        basicauth {
+                $USER $CADDYPASS
+        }
 }
+EOF
 ./caddy run
 ```
 ## Screenshot
